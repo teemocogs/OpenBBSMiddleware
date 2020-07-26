@@ -1,0 +1,14 @@
+﻿################################################################################
+# 這個 .gitignore 檔案由 Microsoft(R) Visual Studio 自動建立。
+################################################################################
+
+/.vs
+/BILib/obj
+/BILib/bin
+/DBModel/obj
+/DBModel/bin
+/DtoModel/obj
+/DtoModel/bin
+/middleware/bin
+/middleware/obj
+*.pubxml
