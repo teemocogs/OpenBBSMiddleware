@@ -27,6 +27,7 @@ namespace middleware.Controllers
         /// 看板商業邏輯
         /// </summary>
         private readonly BoardBl _boardBl;
+        private readonly BILib.BoardHelper _boardHelper;
 
         /// <summary>
         /// 建構子
@@ -36,6 +37,7 @@ namespace middleware.Controllers
         {
             _context = context;
             _boardBl = new BoardBl(_context);
+            _boardHelper = new BILib.BoardHelper(_context);
         }
 
         /// <summary>
@@ -64,7 +66,7 @@ namespace middleware.Controllers
 
             return Ok(_boardBl.GetBoards(page, count));
         }
-    
+
         /// <summary>
         /// 取得指定看板
         /// </summary>
@@ -147,7 +149,7 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            return Ok(_boardBl.GetPopularBoards(page, count));
+            return Ok(_boardHelper.GetPopularBoards().Skip((page - 1) * count).Take(count));
         }
 
         /// <summary>

@@ -1,13 +1,16 @@
 ﻿using DBModel;
 using DBModel.SqlModels;
+using DtoModel;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace BILib
 {
@@ -24,6 +27,36 @@ namespace BILib
 
 
         #region 
+
+        public IEnumerable<BoardDto> GetPopularBoards()
+        {
+            const string URL = @"https://www.ptt.cc/bbs/hotboards.html";
+            log.Info(MethodBase.GetCurrentMethod().Name);
+
+            try
+            {
+                var html = new MyWebClient().DownloadString(URL);
+                var doc = new HtmlDocument(); doc.LoadHtml(HttpUtility.HtmlDecode(html));
+                var sequence = 1;
+
+                return doc.DocumentNode.SelectNodes("//a[@class='board']").Select(node => new BoardDto()
+                {
+                    Sn = sequence++,
+                    Name = node.SelectSingleNode("div[@class='board-name']")?.InnerText,
+                    BoardType = BoardType.Board,
+                    OnlineCount = int.Parse(node.SelectSingleNode("div/span")?.InnerText),
+                    Title = node.SelectSingleNode("div[@class='board-title']")?.InnerText,
+
+                });
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"{MethodBase.GetCurrentMethod().Name}[Exception]：{ex.Message}");
+                log.Debug(ex.StackTrace);
+            }
+
+            return Enumerable.Empty<BoardDto>();
+        }
         public APagePosts GetNewPostListByBoardName(string BoardName = "Test", int page = 1)
         {
             APagePosts pagePosts = new APagePosts();
