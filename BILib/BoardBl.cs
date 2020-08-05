@@ -102,17 +102,11 @@ namespace BILib
         /// <returns>板主名單</returns>
         public string[] GetBoardModerators(string name)
         {
-            string[] moderatorsList = new string[] { };
-            string queryResult = _dbContext.BoardInfo.AsNoTracking().Where(x => x.Board == name).Select(x => x.Moderators).SingleOrDefault();
+            var board = _dbContext.BoardInfo.SingleOrDefault(x => x.Board == name);
+            if (board == null) return null;
 
-            // Filter out (無) before BoardInfo clean up this value from Moderators column
-            string notExist = "(無)";
-            if (!string.Equals(queryResult, notExist))
-            {
-                moderatorsList = queryResult.Split('/');
-            }
-
-            return moderatorsList;
+            var result = board.ToDto().Moderators.Select(p => p.Id).ToArray();
+            return result;
         }
 
         /// <summary>

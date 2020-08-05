@@ -230,7 +230,7 @@ namespace middleware.Controllers
         /// </summary>
         /// <param name="name">看板名稱</param>
         /// <returns>版主名單</returns>
-        [Route("Moderators/{name}")]
+        [Route("{name}/Moderators")]
         [HttpGet]
         public ActionResult<IEnumerable<string>> Moderators(string name)
         {
@@ -246,9 +246,9 @@ namespace middleware.Controllers
             }
 
             var result = _boardBl.GetBoardModerators(name);
-            if (result is null)
+            if (result == null)
             {
-                return NotFound();
+                return NoContent();
             }
             return Ok(result);
         }
