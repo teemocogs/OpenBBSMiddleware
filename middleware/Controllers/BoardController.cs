@@ -122,10 +122,10 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            var result = _boardBl.SearchBoards(keyword);
-            if (result is null)
+            var result = _boardBl.SearchBoards(keyword).SetSerialNumber();
+            if (!result.Any())
             {
-                return NotFound();
+                return NoContent();
             }
 
             return Ok(result);

@@ -57,7 +57,7 @@ namespace BILib
         /// <returns>符合的看板清單</returns>
         public IEnumerable<BoardDto> SearchBoards(string keyword)
         {
-            return _data.Where(x => x.Name.Contains(keyword));
+            return _dbContext.BoardInfo.Where(p => p.Board.Contains(keyword)).ToDtos();
         }
 
         /// <summary>
@@ -174,7 +174,6 @@ namespace BILib
 
         public static IQueryable<BoardDto> ToDtos(this IQueryable<BoardInfo> source)
         {
-            var sorts = Enumerable.Range(1, source.Count()).ToArray();
             var results = source.Select(p => p.ToDto());
 
             return results;
