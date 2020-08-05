@@ -47,7 +47,7 @@ namespace BILib
         /// <returns>看板</returns>
         public BoardDto GetBoard(string name)
         {
-            return _data.SingleOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+            return _dbContext.BoardInfo.SingleOrDefault(p => p.Board == name).ToDto();
         }
 
         /// <summary>
@@ -152,6 +152,8 @@ namespace BILib
     {
         public static BoardDto ToDto(this BoardInfo source)
         {
+            if (source == null) return null;
+
             var moderatorSn = 0;
             var getModeratorSn = new Func<int>(() => moderatorSn += 1);
 

@@ -64,7 +64,13 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            return Ok(_boardBl.GetBoards().Skip((page - 1) * count).Take(count).SetSerialNumber());
+            var result = _boardBl.GetBoards().Skip((page - 1) * count).Take(count).SetSerialNumber();
+            if (!result.Any())
+            {
+                return NoContent();
+            }
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -90,8 +96,9 @@ namespace middleware.Controllers
             var result = _boardBl.GetBoard(name);
             if (result is null)
             {
-                return NotFound();
+                return NoContent();
             }
+
             return Ok(result);
         }
 
