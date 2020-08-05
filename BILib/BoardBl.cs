@@ -35,9 +35,9 @@ namespace BILib
         /// <param name="page">頁數</param>
         /// <param name="count">每頁數量</param>
         /// <returns>看板清單</returns>
-        public IEnumerable<BoardDto> GetBoards(int page, int count)
+        public IEnumerable<BoardDto> GetBoards()
         {
-            return _data.Skip((page-1)*count).Take(count);
+            return _dbContext.BoardInfo.ToDtos();
         }
 
         /// <summary>
@@ -102,16 +102,16 @@ namespace BILib
         /// <returns>板主名單</returns>
         public string[] GetBoardModerators(string name)
         {
-            string[] moderatorsList = new string[] {};
+            string[] moderatorsList = new string[] { };
             string queryResult = _dbContext.BoardInfo.AsNoTracking().Where(x => x.Board == name).Select(x => x.Moderators).SingleOrDefault();
 
             // Filter out (無) before BoardInfo clean up this value from Moderators column
             string notExist = "(無)";
             if (!string.Equals(queryResult, notExist))
             {
-                moderatorsList = queryResult.Split('/');            
+                moderatorsList = queryResult.Split('/');
             }
-            
+
             return moderatorsList;
         }
 
@@ -135,7 +135,8 @@ namespace BILib
                     });
                 }
 
-                _data.Add(new BoardDto {
+                _data.Add(new BoardDto
+                {
                     Sn = i,
                     Name = $"Test{i}",
                     BoardType = BoardType.Board,
@@ -144,6 +145,50 @@ namespace BILib
                     Moderators = moderators
                 });
             }
+        }
+    }
+
+    public static class BoardInfoExtension
+    {
+        public static BoardDto ToDto(this BoardInfo source)
+        {
+            var moderatorSn = 0;
+            var getModeratorSn = new Func<int>(() => moderatorSn += 1);
+
+            return new BoardDto
+            {
+                Sn = 1,
+                Name = source.Board,
+                BoardType = BoardType.Board,
+                Title = source.ChineseDes,
+                OnlineCount = source.OnlineUser ?? 0,
+                Moderators = source.Moderators == "(無)" ? Enumerable.Empty<UserDto>() : source.Moderators.Split('/').Select(id => new UserDto
+                {
+                    Sn = getModeratorSn(),
+                    Id = id
+                })
+            };
+        }
+
+        public static IQueryable<BoardDto> ToDtos(this IQueryable<BoardInfo> source)
+        {
+            var sorts = Enumerable.Range(1, source.Count()).ToArray();
+            var results = source.Select(p => p.ToDto());
+
+            return results;
+        }
+    }
+
+    public static class BoardDtoExtension
+    {
+        public static List<BoardDto> SetSerialNumber(this IEnumerable<BoardDto> source)
+        {
+            var sn = 1;
+            var list = source.ToList();
+
+            list.ForEach(p => p.Sn = sn++);
+
+            return list;
         }
     }
 }

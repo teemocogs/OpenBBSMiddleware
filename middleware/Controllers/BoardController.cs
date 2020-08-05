@@ -64,7 +64,7 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            return Ok(_boardBl.GetBoards(page, count));
+            return Ok(_boardBl.GetBoards().Skip((page - 1) * count).Take(count).SetSerialNumber());
         }
 
         /// <summary>
