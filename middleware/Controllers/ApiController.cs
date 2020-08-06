@@ -37,7 +37,13 @@ namespace middleware.Controllers
         [Route("Article/{board}")]
         public ActionResult<APagePosts> GetNewPostList(string board, int page = 1)
         {
-            return Ok(_boardHelper.GetNewPostListByBoardName(board, page));
+            var result = _boardHelper.GetNewPostListByBoardName(board, page);
+            if (result == null)
+            {
+                return NoContent();
+            }
+
+            return Ok(result);
         }
 
         /// <summary>
