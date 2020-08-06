@@ -57,25 +57,32 @@ namespace BILib
 
             return Enumerable.Empty<BoardDto>();
         }
-        public APagePosts GetNewPostListByBoardName(string BoardName = "Test", int page = 1)
+        public APagePosts GetNewPostListByBoardName(string boardName, int page = 1)
         {
-            APagePosts pagePosts = new APagePosts();
-            pagePosts.Message = new Message();
-            if (!BContainer.dicBoardInfo.ContainsKey(BoardName))
-                SetBoardInfo();
+            var boardInfo = webDB.BoardInfo.SingleOrDefault(p => p.Board == boardName);
+            if (boardInfo == null) return null;
 
-            pagePosts.BoardInfo = BContainer.dicBoardInfo[BoardName];
+            var pagePosts = new APagePosts
+            {
+                BoardInfo = new Board
+                {
+                    Name = boardInfo.Board,
+                    Href = $"/bbs/{boardInfo.Board}/index.html",
+                    Nuser = boardInfo.OnlineUser.ToString(),
+                    Class = "",
+                    Title = boardInfo.ChineseDes,
+                    MaxSize = GetPageSize(boardName)
+                }
+            };
 
             pagePosts.Page = page;
-            log.Info($"GetNewPostListByBoardName[BoardName]：{BoardName}");
+            log.Info($"{MethodBase.GetCurrentMethod().Name}[boardName]:{boardName}");
             string text = string.Empty;
             string strPage = GetPageNo(page, pagePosts.BoardInfo.MaxSize);
 
-            string url = $"https://www.ptt.cc/bbs/{BoardName}/index{strPage}.html";
+            string url = $"https://www.ptt.cc/bbs/{boardName}/index{strPage}.html";
             MyWebClient client = new MyWebClient();
             client.Encoding = Encoding.UTF8; // 設定Webclient.Encoding
-
-
 
             string html = "未知";
             try
@@ -83,7 +90,6 @@ namespace BILib
                 html = client.DownloadString(url);
 
                 Dictionary<int, APost> dicRow = new Dictionary<int, APost>();
-                List<string> iteamList = new List<string>();
 
                 HtmlDocument doc = new HtmlDocument();
                 doc.LoadHtml(html);
@@ -133,8 +139,8 @@ namespace BILib
                                 row.Date = dateNode.InnerText;
                                 //--AidConverter
                                 row.AID = AidConverter.urlToAid(row.Href);
-                                row.Board = BoardName;
-                                List<PostRank> postRanks = webDB.PostRank.AsNoTracking().Where(x => x.Board == BoardName && x.Aid == row.AID).ToList();
+                                row.Board = boardName;
+                                List<PostRank> postRanks = webDB.PostRank.AsNoTracking().Where(x => x.Board == boardName && x.Aid == row.AID).ToList();
                                 if (postRanks.Count > 0)
                                 {
                                     row.Goup = postRanks.Count(x => x.Rank == 1);
@@ -157,13 +163,16 @@ namespace BILib
 
                 }
 
-                pagePosts.PostList = dicRow.Values.Reverse().ToList();
+                pagePosts.PostList = dicRow.Values.ToList();
 
             }
             catch (Exception ex)
             {
-                //html = ex.Message;
-                pagePosts.Message.Error = $"{ex.Message}.{ex.StackTrace}";
+                pagePosts.Message = new Message
+                {
+                    Error = $"{ex.Message}.{ex.StackTrace}"
+                };
+
                 log.Debug($"GetNewPostListByBoardName[Exception]：{ex.Message}");
                 log.Debug(ex.StackTrace);
             }
@@ -358,6 +367,29 @@ namespace BILib
 
             PageNo = page.ToString();
             return PageNo;
+        }
+
+        private int GetPageSize(string boardName)
+        {
+            string URL = $"https://www.ptt.cc/bbs/{boardName}/index.html";
+            log.Info(MethodBase.GetCurrentMethod().Name);
+
+            try
+            {
+                var html = new MyWebClient().DownloadString(URL);
+                var doc = new HtmlDocument(); doc.LoadHtml(HttpUtility.HtmlDecode(html));
+                var node = doc.DocumentNode.SelectSingleNode("//a[.='‹ 上頁']");
+                var number = Regex.Replace(node.OuterHtml, "[^0-9]", "");
+
+                return int.Parse(number) + 1;
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"{MethodBase.GetCurrentMethod().Name}[Exception]：{ex.Message}");
+                log.Debug(ex.StackTrace);
+            }
+
+            return 0;
         }
 
         public class MyWebClient : WebClient
