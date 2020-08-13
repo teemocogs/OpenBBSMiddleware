@@ -13,3 +13,4 @@
 /middleware/obj
 *.pubxml
 .vscode/
+/middleware/Properties/PublishProfiles/WebPTT - Web Deploy.pubxml.user

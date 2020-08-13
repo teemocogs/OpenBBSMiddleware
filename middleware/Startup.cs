@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 using DBModel;
 using DBModel.SqlModels;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
+using middleware.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,9 +34,15 @@ namespace middleware
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<Data.MWDBContext>();
+            services.AddHttpClient();
             services.AddControllersWithViews();
+            services.AddRazorPages();
+            
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddDbContext<MWDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MWDB")));
+            services.AddDbContext<Data.MWDBContext>(options => 
+                    options.UseSqlServer(Configuration.GetConnectionString("MWDB")));
             // Register the Swagger generator, defining 1 or more Swagger documents
             services.AddSwaggerGen(c =>
             {
@@ -43,6 +52,7 @@ namespace middleware
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
+
         }
 
 
@@ -52,6 +62,7 @@ namespace middleware
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseDatabaseErrorPage();
             }
             else
             {
@@ -74,6 +85,7 @@ namespace middleware
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
@@ -81,6 +93,7 @@ namespace middleware
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapRazorPages();
             });
         }
     }
