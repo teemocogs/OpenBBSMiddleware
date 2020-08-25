@@ -1,0 +1,47 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "註冊";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <h4>註冊中介層站台帳號.</h4>
+            <hr />
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.Password">密碼(中介層站台密碼，非BBS密碼)</label>
+                <input asp-for="Input.Password" class="form-control" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.ConfirmPassword">請再次輸入密碼</label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>PTT ID</label>
+                <input asp-for="Input.PTTID" class="form-control" />
+                <span asp-validation-for="Input.PTTID" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>PTT Password</label>
+                <input asp-for="Input.PTTPwd" class="form-control" />
+                <span asp-validation-for="Input.PTTPwd" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">註冊</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
