@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using DBModel;
 using DBModel.SqlModels;
@@ -27,6 +28,7 @@ namespace middleware
         {
             Configuration = configuration;
             BContainer.dicBoardInfo = new Dictionary<string, Board>();
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
         public IConfiguration Configuration { get; }
