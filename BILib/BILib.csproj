@@ -20,6 +20,7 @@
     <PackageReference Include="NLog" Version="4.7.2" />
     <PackageReference Include="NLog.Schema" Version="4.7.2" />
     <PackageReference Include="Websocket.Client" Version="4.3.21" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.1"/>
   </ItemGroup>
 
   <ItemGroup>

@@ -27,6 +27,7 @@ namespace middleware.Controllers
         /// 看板商業邏輯
         /// </summary>
         private readonly BoardBl _boardBl;
+        private readonly BILib.BoardHelper _boardHelper;
 
         /// <summary>
         /// 建構子
@@ -36,6 +37,7 @@ namespace middleware.Controllers
         {
             _context = context;
             _boardBl = new BoardBl(_context);
+            _boardHelper = new BILib.BoardHelper(_context);
         }
 
         /// <summary>
@@ -62,9 +64,15 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            return Ok(_boardBl.GetBoards(page, count));
+            var result = _boardBl.GetBoards().Skip((page - 1) * count).Take(count).SetSerialNumber();
+            if (!result.Any())
+            {
+                return NoContent();
+            }
+
+            return Ok(result);
         }
-    
+
         /// <summary>
         /// 取得指定看板
         /// </summary>
@@ -88,8 +96,9 @@ namespace middleware.Controllers
             var result = _boardBl.GetBoard(name);
             if (result is null)
             {
-                return NotFound();
+                return NoContent();
             }
+
             return Ok(result);
         }
 
@@ -113,10 +122,10 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            var result = _boardBl.SearchBoards(keyword);
-            if (result is null)
+            var result = _boardBl.SearchBoards(keyword).SetSerialNumber();
+            if (!result.Any())
             {
-                return NotFound();
+                return NoContent();
             }
 
             return Ok(result);
@@ -147,7 +156,7 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            return Ok(_boardBl.GetPopularBoards(page, count));
+            return Ok(_boardHelper.GetPopularBoards().Skip((page - 1) * count).Take(count));
         }
 
         /// <summary>
@@ -221,7 +230,7 @@ namespace middleware.Controllers
         /// </summary>
         /// <param name="name">看板名稱</param>
         /// <returns>版主名單</returns>
-        [Route("Moderators/{name}")]
+        [Route("{name}/Moderators")]
         [HttpGet]
         public ActionResult<IEnumerable<string>> Moderators(string name)
         {
@@ -237,9 +246,9 @@ namespace middleware.Controllers
             }
 
             var result = _boardBl.GetBoardModerators(name);
-            if (result is null)
+            if (result == null)
             {
-                return NotFound();
+                return NoContent();
             }
             return Ok(result);
         }
