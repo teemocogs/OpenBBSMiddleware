@@ -1,10 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace DBModel.SqlModels
 {
     public partial class BoardInfo
     {
+        [Key]
+        public int Id { get; set; }
         public string Board { get; set; }
         public int? OnlineUser { get; set; }
         public string ChineseDes { get; set; }

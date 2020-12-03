@@ -1,21 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using BILib;
 using DBModel;
 using DBModel.SqlModels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Text;
 
 namespace middleware
 {
@@ -35,7 +33,12 @@ namespace middleware
         {
             services.AddControllersWithViews();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddDbContext<MWDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MWDB")));
+            services.AddDbContext<MWDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MWDB")))
+                    .AddScoped<BoardBl>();
+
+            services.AddScoped<BoardInfoRepository>()
+                    .AddScoped<PostRankRepository>();
+
             // Register the Swagger generator, defining 1 or more Swagger documents
             services.AddSwaggerGen(c =>
             {

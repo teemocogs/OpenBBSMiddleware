@@ -1,13 +1,9 @@
-﻿using System;
+﻿using BILib;
+using DtoModel;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Threading.Tasks;
-using BILib;
-using DBModel.SqlModels;
-using DtoModel;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace middleware.Controllers
 {
@@ -19,25 +15,18 @@ namespace middleware.Controllers
     public class BoardController : ControllerBase
     {
         /// <summary>
-        /// Database context
-        /// </summary>
-        private readonly MWDBContext _context;
-
-        /// <summary>
         /// 看板商業邏輯
         /// </summary>
         private readonly BoardBl _boardBl;
-        private readonly BILib.BoardHelper _boardHelper;
+        
 
         /// <summary>
         /// 建構子
         /// </summary>
-        /// <param name="context">Database context</param>
-        public BoardController(MWDBContext context)
+        /// <param name="boardBl"></param>
+        public BoardController(BoardBl boardBl)
         {
-            _context = context;
-            _boardBl = new BoardBl(_context);
-            _boardHelper = new BILib.BoardHelper(_context);
+            _boardBl = boardBl;
         }
 
         /// <summary>
@@ -109,7 +98,7 @@ namespace middleware.Controllers
         /// <returns>結果清單</returns>
         [Route("Search")]
         [HttpGet]
-        public ActionResult<IEnumerable<BoardDto>> Search(string keyword)
+        public ActionResult<IEnumerable<BoardDto>> Search([FromQuery] string keyword)
         {
             // 參數檢查
             var validationResults = new List<ValidationResult>();
@@ -156,7 +145,7 @@ namespace middleware.Controllers
                 return BadRequest(validationResults);
             }
 
-            return Ok(_boardHelper.GetPopularBoards().Skip((page - 1) * count).Take(count));
+            return Ok(_boardBl.GetPopularBoards((page - 1) * count, count));
         }
 
         /// <summary>
