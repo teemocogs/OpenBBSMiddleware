@@ -3,6 +3,7 @@ using DBModel.SqlModels;
 using DtoModel;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,27 +15,27 @@ using System.Web;
 
 namespace BILib
 {
-    /// <summary>
-    /// TODO: 未來預期被 BoardHelper_DI 取代；改為 DI 方式
-    /// </summary>
-    public class BoardHelper
+    public class BoardHelper_DI
     {
-        private NLog.Logger log = NLog.LogManager.GetCurrentClassLogger();
+        private readonly BoardInfoRepository _boardDtoRepository;
+        private readonly PostRankRepository _postRankRepository;
+        private readonly ILogger<BoardHelper_DI> _logger;
 
-        private readonly MWDBContext webDB;
-
-        public BoardHelper(MWDBContext context)
+        public BoardHelper_DI(BoardInfoRepository boardDtoRepository,
+                              PostRankRepository postRankRepository,
+                              ILogger<BoardHelper_DI> logger)
         {
-            webDB = context;
+            _boardDtoRepository = boardDtoRepository;
+            _postRankRepository = postRankRepository;
+            _logger = logger;
         }
-
 
         #region 
 
         public IEnumerable<BoardDto> GetPopularBoards()
         {
             const string URL = @"https://www.ptt.cc/bbs/hotboards.html";
-            log.Info(MethodBase.GetCurrentMethod().Name);
+            _logger.LogInformation(MethodBase.GetCurrentMethod().Name);
 
             try
             {
@@ -54,15 +55,16 @@ namespace BILib
             }
             catch (Exception ex)
             {
-                log.Debug($"{MethodBase.GetCurrentMethod().Name}[Exception]：{ex.Message}");
-                log.Debug(ex.StackTrace);
+                _logger.LogDebug($"{MethodBase.GetCurrentMethod().Name}[Exception]：{ex.Message}");
+                _logger.LogDebug(ex.StackTrace);
             }
 
             return Enumerable.Empty<BoardDto>();
         }
+
         public APagePosts GetNewPostListByBoardName(string boardName, int page = 1)
         {
-            var boardInfo = webDB.BoardInfo.SingleOrDefault(p => p.Board == boardName);
+            var boardInfo = _boardDtoRepository.Get().SingleOrDefault(p => p.Board == boardName);
             if (boardInfo == null) return null;
 
             var pagePosts = new APagePosts
@@ -79,7 +81,7 @@ namespace BILib
             };
 
             pagePosts.Page = page;
-            log.Info($"{MethodBase.GetCurrentMethod().Name}[boardName]:{boardName}");
+            _logger.LogInformation($"{MethodBase.GetCurrentMethod().Name}[boardName]:{boardName}");
             string text = string.Empty;
             string strPage = GetPageNo(page, pagePosts.BoardInfo.MaxSize);
 
@@ -143,8 +145,8 @@ namespace BILib
                                 //--AidConverter
                                 row.AID = AidConverter.urlToAid(row.Href);
                                 row.Board = boardName;
-                                List<PostRank> postRanks = webDB.PostRank.AsNoTracking().Where(x => x.Board == boardName && x.Aid == row.AID).ToList();
-                                if (postRanks.Count > 0)
+                                List<PostRank> postRanks = _postRankRepository.Get().Where(x => x.Board == boardName && x.Aid == row.AID).ToList();
+                                if (postRanks.Any())
                                 {
                                     row.Goup = postRanks.Count(x => x.Rank == 1);
                                     row.Down = postRanks.Count(x => x.Rank == -1);
@@ -176,18 +178,16 @@ namespace BILib
                     Error = $"{ex.Message}.{ex.StackTrace}"
                 };
 
-                log.Debug($"GetNewPostListByBoardName[Exception]：{ex.Message}");
-                log.Debug(ex.StackTrace);
+                _logger.LogDebug($"GetNewPostListByBoardName[Exception]：{ex.Message}");
+                _logger.LogDebug(ex.StackTrace);
             }
 
             return pagePosts;
         }
 
-
-
         public OnePost GetPost(string BoardName, string Filename)
         {
-            log.Info($"GetPost[BoardName]：{BoardName}|[Filename]：{Filename}");
+            _logger.LogInformation($"GetPost[BoardName]：{BoardName}|[Filename]：{Filename}");
             string text = string.Empty;
             string url = $"https://www.ptt.cc/bbs/{BoardName}/{Filename}.html";
             MyWebClient client = new MyWebClient();
@@ -286,17 +286,16 @@ namespace BILib
             catch (Exception ex)
             {
                 //Console.WriteLine(ex.Message);
-                log.Debug($"GetPost[Exception]：{ex.Message}");
-                log.Debug(ex.StackTrace);
+                _logger.LogDebug($"GetPost[Exception]：{ex.Message}");
+                _logger.LogDebug(ex.StackTrace);
             }
 
             return post;
         }
 
-
         public void SetBoardInfo()
         {
-            log.Info("SetBoardInfo");
+            _logger.LogInformation("SetBoardInfo");
             string text = string.Empty;
 
             string url = $"https://www.ptt.cc/bbs/hotboards.html";
@@ -351,12 +350,11 @@ namespace BILib
             }
             catch (Exception ex)
             {
-                log.Info($"SetBoardInfo[Exception]{ex.Message}");
-                log.Info($"SetBoardInfo[Exception]{ex.StackTrace}");
+                _logger.LogInformation($"SetBoardInfo[Exception]{ex.Message}");
+                _logger.LogInformation($"SetBoardInfo[Exception]{ex.StackTrace}");
             }
 
         }
-
 
         private string GetPageNo(int page, int MaxPage)
         {
@@ -375,7 +373,7 @@ namespace BILib
         private int GetPageSize(string boardName)
         {
             string URL = $"https://www.ptt.cc/bbs/{boardName}/index.html";
-            log.Info(MethodBase.GetCurrentMethod().Name);
+            _logger.LogInformation(MethodBase.GetCurrentMethod().Name);
 
             try
             {
@@ -388,8 +386,8 @@ namespace BILib
             }
             catch (Exception ex)
             {
-                log.Debug($"{MethodBase.GetCurrentMethod().Name}[Exception]：{ex.Message}");
-                log.Debug(ex.StackTrace);
+                _logger.LogDebug($"{MethodBase.GetCurrentMethod().Name}[Exception]：{ex.Message}");
+                _logger.LogDebug(ex.StackTrace);
             }
 
             return 0;
@@ -427,15 +425,14 @@ namespace BILib
         }
         #endregion
 
-
-
         public RankByPost GetRank(string board, string aID)
         {
             string json = string.Empty;
             RankByPost rankByPost = new RankByPost();
             try
             {
-                List<PostRank> postRanks = webDB.PostRank.AsNoTracking().Where(x => x.Board == board && x.Aid == aID).ToList();
+                var postRanks = _postRankRepository.Get().AsNoTracking()
+                                                   .Where(x => x.Board == board && x.Aid == aID);
 
                 rankByPost.Board = board;
                 rankByPost.AID = aID;
@@ -455,7 +452,9 @@ namespace BILib
             PostRank postRank = null;
             try
             {
-                postRank = webDB.PostRank.Where(x => x.Board == board && x.Aid == aID && x.Pttid == pTTID).FirstOrDefault();
+                postRank = _postRankRepository.Get()
+                                              .Where(x => x.Board == board && x.Aid == aID && x.Pttid == pTTID)
+                                              .FirstOrDefault();
                 if (postRank is null)
                 {
                     postRank = new PostRank()
@@ -466,13 +465,13 @@ namespace BILib
                         Pttid = pTTID.Trim(),
                         Rank = iR
                     };
-                    webDB.PostRank.Add(postRank);
+                    _postRankRepository.Insert(postRank);
                 }
                 else
                 {
                     postRank.Rank = iR;
                 }
-                webDB.SaveChanges();
+                _postRankRepository.Save();
             }
             catch (Exception ex)
             {
@@ -481,5 +480,4 @@ namespace BILib
             return postRank;
         }
     }
-
 }

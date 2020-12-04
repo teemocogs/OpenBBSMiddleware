@@ -129,7 +129,7 @@ namespace DBModel.SqlModels
 
             modelBuilder.Entity<BoardInfo>(entity =>
             {
-                entity.HasNoKey();
+                entity.HasKey(b => b.Id);
 
                 entity.Property(e => e.Board)
                     .IsRequired()
